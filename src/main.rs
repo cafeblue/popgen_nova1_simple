@@ -1,3 +1,6 @@
+// use clap::{Arg, Command, ArgAction};
+use clap::Parser;
+
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -26,13 +29,29 @@ fn tajd_cstes(nb: u64) -> (f64, f64) {
 	return (e1, e2);
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// snp frequency csv file
+    #[arg(short, long)]
+    csvfile: String,
+
+    /// sample size
+    #[arg(short, long)]
+    samplesize: u64,
+
+    /// Exon length
+    #[arg(short, long)]
+    exonlength: f64,
+}
 fn main() {
-  let all_nb: u64 = 242824;
+  let args = Args::parse();
+  let all_nb = args.samplesize;
+  let det: f64 = args.exonlength;
   let mut pi_tmp: u64 = 0;
   let mut h_tmp: u64 = 0;
   let mut seg: u64 = 0;
   let mut tajd: f64 = 0.0;
-  let det: f64 = 8276.0;
 
   // calculate a_1
   let mut a_1: f64 = 0.0;
@@ -41,15 +60,13 @@ fn main() {
   }
   println!("a_1 calculated");
   // Read in pi values
-  let mut linnum: u8 = 0;
-  if let Ok(lines) = read_lines("./pykeys_new.txt") {
+  if let Ok(lines) = read_lines(args.csvfile) {
     println!("reading file");
 	for line in lines {
-        linnum += 1;
 		if let Ok(ip) = line {
 			let mut spl = ip.split_whitespace();
 			let snp = spl.next().unwrap().parse::<u64>().unwrap();
-			let nb = spl.next().unwrap().parse::<u32>().unwrap();
+			let _nb = spl.next().unwrap().parse::<u32>().unwrap();
 			let freq = spl.next().unwrap().parse::<u64>().unwrap();
 	        pi_tmp += freq * (all_nb - freq) * snp;
 	        h_tmp += freq.pow(2) * snp;
@@ -63,17 +80,17 @@ fn main() {
   let pi = pi_tmp as f64 / ((tipi as f64 * (tipi as f64 - 1.0)) / 2.0) / det ;
   let pi_corrected = 0.75 * (1.0 - ( 4.8 * pi / 3.0)).ln();
   let theta = seg as f64 / a_1 / det;
-  let thetaW_corrected = ( det / (det - seg as f64)).ln() / a_1;
+  let theta_w_corrected = ( det / (det - seg as f64)).ln() / a_1;
 
   let mut d: f64 = 0.0;
   let (e1, e2) = tajd_cstes(all_nb);
   let p1p2: f64 = e1 * seg as f64 + e2 * seg as f64 * (seg as f64 - 1.0);
   if pi > 0.0 && theta > 0.0 {
-	d = pi - theta;
+  	d = pi - theta;
   }
 
   if p1p2 > 0.0 {
-	tajd = d * det / p1p2.sqrt();
+    tajd = d * det / p1p2.sqrt();
   }
 
   let hache = h_tmp as f64/ ((tipi as f64 * (tipi as f64 - 1.0)) / 2.0);
@@ -82,7 +99,7 @@ fn main() {
   println!("pi:\t{}", pi);
   println!("pi Corrected:\t{}", pi_corrected);
   println!("thetaW:\t{}", theta);
-  println!("thetaW Corrected:\t{}", thetaW_corrected);
+  println!("thetaW Corrected:\t{}", theta_w_corrected);
   println!("D:\t{}", d);
   println!("Tajima's D:\t{}", tajd);
   println!("H:\t{}", final_h);
