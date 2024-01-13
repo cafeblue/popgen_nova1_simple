@@ -49,58 +49,66 @@ fn main() {
   let all_nb = args.samplesize;
   let det: f64 = args.exonlength;
   let mut pi_tmp: u64 = 0;
+  let mut pi_min_tmp: u64 = 0;
   let mut h_tmp: u64 = 0;
   let mut seg: u64 = 0;
   let mut tajd: f64 = 0.0;
+  let mut tajd_min: f64 = 0.0;
 
   // calculate a_1
   let mut a_1: f64 = 0.0;
   for m in 1..(all_nb+1) {
     a_1 += 1.0 / m as f64;
   }
-  println!("a_1 calculated");
   // Read in pi values
   if let Ok(lines) = read_lines(args.csvfile) {
-    println!("reading file");
 	for line in lines {
 		if let Ok(ip) = line {
 			let mut spl = ip.split_whitespace();
-			let snp = spl.next().unwrap().parse::<u64>().unwrap();
-			let _nb = spl.next().unwrap().parse::<u32>().unwrap();
 			let freq = spl.next().unwrap().parse::<u64>().unwrap();
-	        pi_tmp += freq * (all_nb - freq) * snp;
-	        h_tmp += freq.pow(2) * snp;
-	        seg += snp;
+			let _nb = spl.next().unwrap().parse::<u64>().unwrap();
+			let snp = spl.next().unwrap().parse::<u64>().unwrap();
+      if freq == _nb {
+        break ;
+      }
+	    pi_tmp += freq * (all_nb - freq) * snp;
+	    pi_min_tmp += 1 * (all_nb - 1) * snp;
+	    h_tmp += freq.pow(2) * snp;
+	    seg += snp;
 		}
 	}
   }
-  println!("pi calculated");
 
   let tipi: u64 = all_nb;
   let pi = pi_tmp as f64 / ((tipi as f64 * (tipi as f64 - 1.0)) / 2.0) / det ;
-  let pi_corrected = 0.75 * (1.0 - ( 4.8 * pi / 3.0)).ln();
+  let pi_min = pi_min_tmp as f64 / ((tipi as f64 * (tipi as f64 - 1.0)) / 2.0) / det ;
+  //let pi_corrected = 0.75 * (1.0 - ( 4.8 * pi / 3.0)).ln();
   let theta = seg as f64 / a_1 / det;
-  let theta_w_corrected = ( det / (det - seg as f64)).ln() / a_1;
+  //let theta_w_corrected = ( det / (det - seg as f64)).ln() / a_1;
 
   let mut d: f64 = 0.0;
+  let mut dmin: f64 = 0.0;
   let (e1, e2) = tajd_cstes(all_nb);
   let p1p2: f64 = e1 * seg as f64 + e2 * seg as f64 * (seg as f64 - 1.0);
   if pi > 0.0 && theta > 0.0 {
   	d = pi - theta;
+  	dmin = pi_min - theta;
   }
 
   if p1p2 > 0.0 {
     tajd = d * det / p1p2.sqrt();
+    tajd_min = dmin * det / p1p2.sqrt();
   }
 
   let hache = h_tmp as f64/ ((tipi as f64 * (tipi as f64 - 1.0)) / 2.0);
   let final_h = pi - hache;
 
   println!("pi:\t{}", pi);
-  println!("pi Corrected:\t{}", pi_corrected);
+  //println!("pi Corrected:\t{}", pi_corrected);
   println!("thetaW:\t{}", theta);
-  println!("thetaW Corrected:\t{}", theta_w_corrected);
-  println!("D:\t{}", d);
+  //println!("thetaW Corrected:\t{}", theta_w_corrected);
+  //println!("D:\t{}", d);
   println!("Tajima's D:\t{}", tajd);
+  println!("Tajima's D normalized:\t{}", tajd/tajd_min);
   println!("H:\t{}", final_h);
 }
