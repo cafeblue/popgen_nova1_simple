@@ -69,10 +69,10 @@ fn main() {
 			let _nb = spl.next().unwrap().parse::<u64>().unwrap();
 			let snp = spl.next().unwrap().parse::<u64>().unwrap();
       if freq == _nb {
-        break ;
+        continue;
       }
-	    pi_tmp += freq * (all_nb - freq) * snp;
-	    pi_min_tmp += 1 * (all_nb - 1) * snp;
+	    pi_tmp += freq * (_nb - freq) * snp;
+	    pi_min_tmp += 1 * (_nb - 1) * snp;
 	    h_tmp += freq.pow(2) * snp;
 	    seg += snp;
 		}
@@ -103,12 +103,13 @@ fn main() {
   let hache = h_tmp as f64/ ((tipi as f64 * (tipi as f64 - 1.0)) / 2.0);
   let final_h = pi - hache;
 
-  println!("pi:\t{}", pi);
+  println!("pi:\tthetaW:\tTajima's D:\tTajima's D normalized:\tH:");
+  println!("{}\t{}\t{}\t{}\t{}", pi, theta, tajd, tajd/tajd_min, final_h);
   //println!("pi Corrected:\t{}", pi_corrected);
-  println!("thetaW:\t{}", theta);
+  //println!("thetaW:\t{}", theta);
   //println!("thetaW Corrected:\t{}", theta_w_corrected);
   //println!("D:\t{}", d);
-  println!("Tajima's D:\t{}", tajd);
-  println!("Tajima's D normalized:\t{}", tajd/tajd_min);
-  println!("H:\t{}", final_h);
+  //println!("Tajima's D:\t{}", tajd);
+  //println!("Tajima's D normalized:\t{}", tajd/tajd_min);
+  //println!("H:\t{}", final_h);
 }
